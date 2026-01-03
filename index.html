@@ -1,0 +1,3274 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>صفحة Elite Spark - الطقس والتحكم</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* ========================================= */
+        /* تنسيقات الهيكل الرئيسي           */
+        /* ========================================= */
+        :root {
+            --gold-glow: #FFD700;
+            --background-color: #000;
+            --text-color: #F0F0F0;
+            --sidebar-width: 280px;
+            --primary-color: #FFD700;
+            --secondary-color: #000;
+            --accent-color: #8B7500;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+            background-color: #000;
+            color: var(--text-color);
+            overflow-x: hidden;
+        }
+
+        /* ========================================= */
+        /* القائمة الجانبية الفخمة           */
+        /* ========================================= */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            right: -320px; /* مخفية في البداية */
+            width: var(--sidebar-width);
+            height: 200vh;
+            background: linear-gradient(180deg, #1a1a1a 0%, #000 100%);
+            box-shadow: -5px 0 25px rgba(255, 215, 0, 0.2);
+            z-index: 1000;
+            transition: right 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            border-left: 2px solid var(--gold-glow);
+            padding-top: 70px;
+            overflow-y: auto;
+            max-height: 200vh;
+        }
+
+        .sidebar.active {
+            right: 0;
+        }
+
+        .sidebar-header {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 15px;
+            text-align: center;
+            border-bottom: 1px solid var(--gold-glow);
+            display: flex;
+            justify-content: space-between;
+        }
+
+
+        .sidebar-header h3 {
+            color: var(--gold-glow);
+            margin: 0;
+            font-size: 1.3em;
+            text-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
+        }
+        .sidebar-close {
+            background: none;
+            border: none;
+            color: var(--gold-glow);
+            font-size: 1.7em;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            margin-left: 20px;
+        }
+
+        .sidebar-close:hover {
+            transform: rotate(90deg);
+        }
+
+        .sidebar-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #000 0%, #1a1a1a 100%);
+            border: 2px solid var(--gold-glow);
+            border-radius: 50%;
+            color: var(--gold-glow);
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 25px rgba(255, 215, 0, 0.7);
+        }
+
+        .sidebar-menu {
+            padding: 20px 0;
+            max-height: calc(150vh - 170px); /* ارتفاع معقول */
+            overflow-y: auto; /* قابلية التمرير */
+        }
+        /* إخفاء شريط التمرير لكن مع إبقاء التمرير */
+        .sidebar-menu::-webkit-scrollbar {
+          width: 5px;
+        }
+
+        .sidebar-menu::-webkit-scrollbar-track {
+           background: rgba(0, 0, 0, 0.2);
+        }
+
+        .sidebar-menu::-webkit-scrollbar-thumb {
+          background: var(--gold-glow);
+          border-radius: 10px;
+        }
+
+        .menu-item {
+            padding: 18px 25px;
+            margin: 10px 15px;
+            background: rgba(255, 215, 0, 0.05);
+            border-right: 3px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 10px 0 0 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .menu-item:hover {
+            background: rgba(255, 215, 0, 0.15);
+            border-right: 3px solid var(--gold-glow);
+            transform: translateX(-5px);
+        }
+
+        .menu-item.active {
+            background: rgba(255, 215, 0, 0.1);
+            border-right: 3px solid var(--gold-glow);
+        }
+
+        .menu-icon {
+            font-size: 22px;
+            color: var(--gold-glow);
+            width: 30px;
+            text-align: center;
+        }
+
+        .menu-icon2 {
+            font-size: 22px;
+            color: #FFD700;
+            width: 30px;
+            text-align: center;
+        }
+
+        .menu-text {
+            color: #FFD700;
+            font-weight: 500;
+            font-size: 16px;
+            flex-grow: 1;
+        }
+
+        .menu-badge {
+            background: var(--gold-glow);
+            color: #000;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .submenu {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease;
+            background: rgba(0, 0, 0, 0.5);
+            margin: 0 15px 10px 15px;
+            border-radius: 0 0 10px 10px;
+        }
+
+        .submenu.active {
+            max-height: 300px;
+        }
+
+        .submenu-item {
+            padding: 12px 20px 12px 60px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #FFD700;
+            border-bottom: 1px solid rgba(255, 215, 0, 0.1);
+        }
+
+        .submenu-item:hover {
+            background: rgba(255, 215, 0, 0.1);
+            padding-right: 25px;
+        }
+
+        .submenu-item:last-child {
+            border-bottom: none;
+        }
+
+        .theme-colors {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 15px;
+            justify-content: center;
+        }
+
+        .theme-color {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .theme-color:hover {
+            transform: scale(1.1);
+        }
+
+        .theme-color.active {
+            border-color: #fff;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
+        }
+
+        /* في قسم <style> أضف: */
+
+/* حاوية الإنفينيتي */
+        .cards {
+            background-color: transparent;
+            height: 87%;
+            position: relative;
+            flex-direction: column;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding-left: 5px;
+            border-left: 0px solid var(--gold-glow);
+            border-right: 2px solid var(--gold-glow);
+            border-bottom: 2px solid var(--gold-glow);
+            border-top: 0px solid var(--gold-glow);
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+            border-radius: 20px;
+            overflow: hidden;
+            gap: 0px; 
+            margin: 0px;
+            margin-right: -10px;
+            
+        }
+
+        #infinityCanvas {
+          width: 85%;
+          height: 85%;
+          display: block;
+        }
+
+
+
+        .viz-text {
+          font-family: 'Arial', sans-serif;
+        }
+
+        /* مؤشر الصوت */
+        .audio-indicator {
+          position: absolute;
+          bottom: 15px;
+          right: 15px;
+          background: rgba(0, 0, 0, 0.5);
+          padding: 8px 15px;
+          border-radius: 0px;
+          border: 0px solid var(--gold-glow);
+          border-bottom: 1px solid var(--gold-glow);
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          z-index: 10;
+        }
+
+        .audio-bar {
+          width: 100px;
+          height: 8px;
+          background: rgba(255, 215, 0, 0.1);
+          border-radius: 4px;
+          overflow: hidden;
+        }
+
+        .audio-bar::after {
+          content: '';
+          display: block;
+          height: 100%;
+          width: 0%;
+          background: linear-gradient(90deg, var(--gold-glow), #ff9900);
+          border-radius: 4px;
+          transition: width 0.1s ease;
+        }
+
+        .audio-text {
+          color: var(--gold-glow);
+          font-size: 12px;
+          min-width: 35px;
+          text-align: center;
+        }
+        /* ========================================= */
+        /* تنسيقات لوحة الإشعارات                   */
+        /* ========================================= */
+        .notifications-panel {
+            width: 90%;
+            max-height: 70vh;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .notifications-panel h2 {
+            color: var(--gold-glow);
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.4em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .notifications-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .notification-item {
+            background: rgba(255, 215, 0, 0.05);
+            border: 1px solid var(--gold-glow);
+            border-radius: 15px;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .notification-item:hover {
+            background: rgba(255, 215, 0, 0.1);
+            transform: translateX(-5px);
+            border-color: var(--gold-glow);
+        }
+
+        .notification-item.unread {
+            border-left: 3px solid var(--gold-glow);
+        }
+
+        .notification-icon {
+            font-size: 24px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 215, 0, 0.1);
+            border-radius: 50%;
+        }
+
+        .notification-content {
+            flex: 1;
+        }
+
+        .notification-title {
+            color: var(--gold-glow);
+            font-weight: bold;
+            font-size: 1em;
+            margin-bottom: 5px;
+        }
+
+        .notification-message {
+            color: rgba(255, 215, 0, 0.8);
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        .notification-time {
+            color: rgba(255, 215, 0, 0.6);
+            font-size: 0.8em;
+        }
+
+        .notification-dot {
+            width: 10px;
+            height: 10px;
+            background: var(--gold-glow);
+            border-radius: 50%;
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            animation: pulse 1.5s infinite;
+        }
+
+        .notification-actions {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .notification-btn {
+            background: linear-gradient(135deg, #000, #1a1a1a);
+            color: var(--gold-glow);
+            border: 1px solid var(--gold-glow);
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .notification-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* ========================================= */
+        /* نافذة منبثقة لأجهزة Google Home           */
+        /* ========================================= */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 100%;
+            height: 300vh;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 2000;
+            display: flex;
+            align-items: top;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.4s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            width: 90%;
+            max-width: 900px;
+            height: 150vh;
+            background: linear-gradient(135deg, #1a1a1a 0%, #000 100%);
+            border-radius: 20px;
+            border: 2px solid var(--gold-glow);
+            box-shadow: 0 0 40px rgba(255, 215, 0, 0.3);
+            overflow: hidden;
+            transform: scale(0.9);
+            transition: transform 0.4s ease;
+            gap: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            width: 99%;
+            padding: 20px;
+            padding-bottom: 2px;
+            padding-top: 5px;
+            background: rgba(0, 0, 0, 0.8);
+            border-bottom: 1px solid var(--gold-glow);
+            text-align: center;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            color: var(--gold-glow);
+            margin: 0;
+            font-size: 1.2em;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--gold-glow);
+            font-size: 28px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .modal-close:hover {
+            transform: rotate(90deg);
+        }
+
+        .modal-body {
+            padding: 20px;
+            height: calc(100% - 70px);
+            overflow-y: auto;
+        }
+
+        .devices-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            padding: 10px;
+        }
+
+        .inner-wide-card {
+            background: #000;
+            border-left: 2px solid var(--gold-glow);
+            border-right: 2px solid var(--gold-glow);
+            border-bottom: 0px solid var(--gold-glow);
+            border-top: 0px solid #FFD700;
+            border-radius: 20px;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+            padding: 5px;
+            text-align: center;
+            transition: all 0.3s ease;
+            height: 93%;
+            width: 93%;
+            padding-top: 0px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 5px;
+            margin-bottom: 0px;
+        }
+        
+        .inner-wide-card:hover {
+            box-shadow: 0 0 25px rgba(255, 215, 0, 0.6);
+            transform: translateY(-3px);
+        }
+
+        .inner-wide-card iframe {
+            width: 100%;
+            height: 100vh;
+            border: none;
+            margin-top:-30vh;
+        }
+
+        
+
+        /* ========================================= */
+        /* بقية التنسيقات كما هي مع تعديلات بسيطة    */
+        /* ========================================= */
+        .page-header {
+            text-align: center;
+            padding: 5px 0;
+            margin-bottom: 0px;
+            margin-right: 80px; /* مساحة لأيقونة القائمة */
+        }
+        
+        .page-header h1 {
+            color: var(--gold-glow);
+            text-shadow: 
+              0 0 10px var(--gold-glow),
+              0 0 20px rgba(255, 215, 0, 0.5),
+              0 0 30px rgba(255, 215, 0, 0.3);
+        }
+
+        .main-container {
+            background-color: transparent;
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+            transition: margin-right 0.5s ease;
+        }
+
+        .main-container.sidebar-active {
+            margin-right: var(--sidebar-width);
+        }
+
+        .card {
+            width: 99%;
+            margin-top: -40px;
+            padding: 15px;
+            background-color: #transparent;
+            border-radius: 8px;
+            box-sizing: border-box;
+            height: 80vh; /* زيادة الارتفاع ليتناسب مع محتوى الـ iframe */
+        }
+
+        .card h2 {
+            color: var(--gold-glow);
+            padding-bottom: 5px;
+            margin-top: 0;
+        }
+
+
+        .spacer {
+            flex-basis: 1%;
+            flex-grow: 0;
+            flex-shrink: 0;
+        }
+        .spacer1 {
+            flex-basis: 200px;
+        }
+
+        .weather-card {
+            background-color: transparent;
+            flex-basis: 15%;
+            flex-grow: 0; 
+            flex-shrink: 0; 
+            min-height: auto; 
+            height: auto; 
+            overflow: hidden; 
+        }
+
+        .weather-card .weatherwidget-io {
+            display: block;
+            width: 100%;
+        }
+        
+        .weather-card > div:last-child {
+            width: 100% !important; 
+        }
+
+        .spacer {
+            flex-basis: 1%;
+            flex-grow: 0;
+            flex-shrink: 0;
+        }
+        .spacer1 {
+            flex-basis: 20px;
+        }
+        .spacer2 {
+            flex-basis: 15px;
+        }
+
+        .content-card {
+            background-color: transparent;
+            flex-basis: 80%;
+            flex-grow: 1; 
+            flex-shrink: 1; 
+        }
+
+        #html-content-placeholder {
+            margin: 10;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #000;
+            color: #FFD700;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 460px;
+        }
+
+        #html-content-placeholder h1 {
+            font-size: 1.5em;
+            text-shadow: 0 0 15px #FFD700;
+            letter-spacing: 2px;
+            margin-top: 0;
+        }
+
+        .logo {
+            font-weight: bold;
+            font-size: 0.8em;
+            font-family: 'Roboto', sans-serif;
+            color: var(--gold-glow);
+            margin: 0px;
+            margin-right: 10px;
+            text-shadow: 1px 1px 5px rgba(255, 215, 0, 0.4);
+            animation: fadeInUp 0.8s ease-in-out;
+        }
+
+        .weather-refresh-btn {
+            position: relative;
+        }
+
+        .refresh-spinner {
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-animation {
+            display: flex;
+            gap: 15px;
+            margin-top: 40px;
+            animation: fadeInUp 1.5s ease 0.6s both;
+        }
+
+        .loading-dot {
+            width: 20px;
+            height: 20px;
+            background: var(--gold-light);
+            border-radius: 50%;
+            animation: pulse 1.5s ease-in-out infinite;
+            box-shadow: 0 0 15px var(--gold-light);
+        }
+
+        .loading-dot:nth-child(2) {
+            animation-delay: 0.2s;
+            background: var(--gold-medium);
+        }
+
+        .loading-dot:nth-child(3) {
+            animation-delay: 0.4s;
+            background: var(--gold-dark);
+        }
+
+        .loading-text {
+            color: var(--gold-light);
+            font-size: 1.2rem;
+            margin-top: 30px;
+            animation: fadeInUp 1.5s ease 0.9s both;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+        }
+
+          .card1t {
+            background-color: transparent;
+            height: 46%;
+            
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-left: 0px solid #FFD700;
+            border-right: 2px solid var(--gold-glow);
+            border-bottom: 0px solid #FFD700;
+            border-top: 2px solid var(--gold-glow);
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+            border-radius: 20px;
+            bottom: 0px;
+ 
+            margin: 0px;
+            
+        }
+          .card1d {
+            background-color: transparent;
+            height: 46%;
+            
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-left: 0px solid var(--gold-glow);
+            border-right: 2px solid var(--gold-glow);
+            border-bottom: 0px solid var(--gold-glow);
+            border-top: 2px solid var(--gold-glow);
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+            border-radius: 20px;
+            bottom: 0px;
+
+            margin: 0px;
+            
+        }
+
+        .carde {
+            background-color: transparent;
+            height: 100%;
+            
+            flex-direction: column;
+            width: 72%;
+            display: flex;
+            
+            padding-left: 5px;
+            border-left: 0px solid var(--gold-glow);
+            border-right: 0px solid var(--gold-glow);
+            border-bottom: 0px solid var(--gold-glow);
+            border-top: 0px solid var(--gold-glow);
+            padding: 5px;
+            border-radius: 0px;
+            padding-right: 0px;
+            gap: 10px; 
+            margin: 0px;
+            
+        }
+        .cardt {
+            background-color: transparent;
+            height: 100%;
+            
+            flex-direction: column;
+            width: 26%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0px;
+            border-left: 0px solid var(--gold-glow);
+            border-right: 0px solid var(--gold-glow);
+            border-bottom: 0px solid var(--gold-glow);
+            border-top: 0px solid var(--gold-glow);
+            direction: ltr;
+            border-radius: 0px;
+
+            gap: 0px; 
+            margin: 0px;
+            
+        }
+
+        .header1 {
+            border-left: 0px solid #FFD700;
+            border-right: 2px solid var(--gold-glow);
+            border-bottom: 0px solid rgba(255, 215, 0, 0.6);
+            border-top: 0px solid #FFD700;
+            border-radius: 0px;
+            flex-direction: column;                 
+                     
+            padding: 5px;
+            padding-bottom: 0px;
+            padding-right: 30px;
+            width: 80%;
+ 
+            display: flex;
+            margin: 5px;
+            margin-top: -40px;
+            gap: 10px;  
+            bottom: 0px;
+            left: -100px; 
+            margin: 0px; 
+            height: 460px;  
+        }
+
+        .header {
+            border-left: 0px solid var(--gold-glow);
+            border-right: 0px solid var(--gold-glow);
+            border-bottom: 0px solid var(--gold-glow);
+            border-top: 0px solid var(--gold-glow);
+            border-radius: 20px;
+                             
+            height: 66%;         
+            padding: 5px;
+            width: 100%;
+            justify-content: left;
+            
+            display: flex;
+            margin: 5px;
+            gap: 10px;  
+            bottom: 0px;
+            left: -100px; 
+ 
+        }
+
+        .elite-time-container {
+            text-align: center;
+            width: 100%;
+            height: 100%; 
+            padding: 15px;
+            font-family: 'Orbitron', 'Roboto', sans-serif;
+            color: var(--gold-glow);
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 20px;
+            border: 0px solid var(--gold-glow);
+            border-left: 1px solid var(--gold-glow);
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .elite-time-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, 
+                transparent, 
+                var(--gold-glow), 
+                transparent);
+            animation: scanline 3s linear infinite;
+        }
+
+        .time-display {
+            margin-top: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 1.8em;
+            font-weight: 700;
+            text-shadow: 
+                0 0 10px var(--gold-glow),
+                0 0 20px rgba(255, 215, 0, 0.5),
+                0 0 30px rgba(255, 215, 0, 0.3);
+            letter-spacing: 2px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .time-segment {
+            background: linear-gradient(135deg, 
+                rgba(255, 215, 0, 0.1), 
+                rgba(255, 215, 0, 0.05));
+            padding: 12px 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            min-width: 30px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .time-segment:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(255, 215, 0, 0.2);
+        }
+
+        .time-separator {
+            font-size: 1.8em;
+            opacity: 0.8;
+            animation: pulse 2s infinite;
+            text-shadow: 0 0 15px var(--gold-glow);
+        }
+
+        .ampm-indicator {
+            font-size: 0.8em;
+            background: linear-gradient(135deg, 
+                var(--gold-glow), 
+                #ff9900);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 600;
+            padding: 6px 6px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 215, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .date-display {
+            margin-top: 30px;
+            font-size: 1.1em;
+            color: var(--gold-glow);
+            text-shadow: 
+                0 0 10px var(--gold-glow),
+                0 0 20px rgba(255, 215, 0, 0.5),
+                0 0 30px rgba(255, 215, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column; 
+            gap: 15px;
+            padding: 5px 10px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 15px;
+            border: 0px solid var(--gold-glow);
+    
+        }
+
+        .date-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* مؤشرات حية */
+        .time-indicators {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .indicator-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #00ff00;
+            box-shadow: 0 0 10px #00ff00;
+            animation: indicatorPulse 1.5s infinite;
+        }
+
+        .indicator-dot:nth-child(2) {
+            background: #ffff00;
+            animation-delay: 0.3s;
+        }        
+
+        .indicator-dot:nth-child(3) {
+            background: #ff4444;
+            animation-delay: 0.6s;
+        }
+
+        /* حركات */
+        @keyframes scanline {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        @keyframes indicatorPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        @keyframes glow {
+            0%, 100% { text-shadow: 0 0 10px var(--gold-glow); }
+            50% { text-shadow: 0 0 20px var(--gold-glow); }
+        }
+        
+        .blink {
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+        
+        #startup-screen {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: black;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            z-index: 9999;
+            color: var(--gold-glow);
+            font-family: monospace;
+            font-size: 1.2em;
+            text-align: center;
+            transition: opacity 1s ease;
+        }
+        #startup-screen #logo {
+            font-size: 1.5em; 
+            font-weight: bold; 
+            margin-bottom: 10px;
+        }
+        
+        .smart-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 5px;
+          color: var(--gold-glow);
+          font-weight: bold;
+        }
+
+         /* أنماط الأفاتار الذهبي Infinity */
+
+        .card1 {
+            background-color: transparent;
+            height: 33%;
+            padding: 5px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-left: 0px solid #FFD700;
+            border-right: 2px solid var(--gold-glow);
+            border-bottom: 0px solid #FFD700;
+            border-top: 2px solid var(--gold-glow);
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+            border-radius: 20px;
+            bottom: 0px;
+            left: -25px; 
+            margin: 0px;
+            
+        }
+
+        /* حاوية الأفاتار - تخطيط أفقي */
+        .infinity-avatar-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: row; /* تغيير من column إلى row */
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            padding: 0 0px;
+            
+        }
+        
+        /* الجانب الأيسر - النصوص */
+        .avatar-left-side {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            padding-left: 20px;
+            
+        }
+        
+        /* الجانب الأوسط - الدائرة والجسيمات */
+        .avatar-center {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            width: 150px;
+            height: 150px;
+            
+        }
+        
+        /* الجانب الأيمن - رمز Infinity */
+        .avatar-right-side {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            padding-right: 20px;
+            border: 0px solid #00BFFF;
+            
+        }
+        
+        /* رمز Infinity الذهبي */
+        .infinity-symbol {
+            position: relative;
+            width: 170px;
+            height: 85px;
+            border: 0px solid #FFD700;
+        }
+        
+        .infinity-loop {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            border: 3px solid transparent;
+            border-radius: 50%;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
+        }
+        
+        .loop-1 {
+            right: 0;
+            border-top-color: var(--gold-glow);
+            border-right-color: var(--gold-glow);
+            animation: rotateClockwise 4s linear infinite;
+        }
+        
+        .loop-2 {
+            left: 0;
+            border-bottom-color: var(--gold-glow);
+            border-left-color: var(--gold-glow);
+            animation: rotateCounterClockwise 4s linear infinite;
+        }
+        
+        /* النواة المركزية */
+        .avatar-core {
+            position: absolute;
+            top: 50%;
+            right: 50%;
+            transform: translate(50%, -50%);
+            width: 20px;
+            height: 20px;
+            background: radial-gradient(circle, 
+                #FFD700 0%,
+                #FFEC8B 30%,
+                #FFF8DC 50%,
+                transparent 70%);
+            border-radius: 50%;
+            box-shadow: 0 0 30px var(--gold-glow),
+                        0 0 50px rgba(255, 215, 0, 0.5),
+                        0 0 70px rgba(255, 215, 0, 0.3);
+            animation: corePulse 2s infinite alternate;
+        }
+        
+        /* هالة حول الأفاتار - في المنتصف */
+        .avatar-halo {
+            position: absolute;
+            width: 130px;
+            height: 130px;
+            border-radius: 50%;
+            border: 2px dashed rgba(255, 215, 0, 0.4);
+            animation: haloRotate 20s linear infinite;
+        }
+        
+        .halo-particle {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: var(--gold-glow);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--gold-glow);
+        }
+        
+        .halo-particle:nth-child(1) { top: 0; right: 50%; transform: translateX(50%); }
+        .halo-particle:nth-child(2) { top: 50%; right: 0; transform: translateY(-50%); }
+        .halo-particle:nth-child(3) { bottom: 0; right: 50%; transform: translateX(50%); }
+        .halo-particle:nth-child(4) { top: 50%; left: 0; transform: translateY(-50%); }
+        
+        /* جسيمات طافية */
+        .floating-particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            right: 0;
+            pointer-events: none;
+        }
+        
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: var(--gold-glow);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--gold-glow);
+            animation: floatParticle 10s infinite linear;
+        }
+        
+        /* نص على اليسار */
+        
+        .avatar-subtitle {
+            color: var(--gold-glow);
+            font-size: 1.1em;
+            margin-bottom: 10px;
+            text-align: right;
+            max-width: 200px;
+        }
+        
+        /* مؤشرات حالة */
+        .avatar-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 5px;
+        }
+        
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #00FF00;
+            box-shadow: 0 0 10px #00FF00;
+            animation: statusPulse 2s infinite;
+        }
+        
+        .status-text {
+            color: rgba(255, 215, 0, 0.7);
+            font-size: 1.1em;
+            text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+        }
+        
+        /* تأثيرات خاصة */
+        .energy-waves {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            right: 0;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+        
+        .wave {
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, 
+                transparent 30%,
+                rgba(255, 215, 0, 0.3) 40%,
+                transparent 50%);
+            top: 50%;
+            right: 50%;
+            transform: translate(50%, -50%);
+            animation: waveExpand 3s infinite;
+        }
+        
+        /* الحركات */
+        @keyframes rotateClockwise {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes rotateCounterClockwise {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(-360deg); }
+        }
+        
+        @keyframes corePulse {
+            0% { 
+                transform: translate(50%, -50%) scale(1);
+                box-shadow: 0 0 30px var(--gold-glow),
+                            0 0 50px rgba(255, 215, 0, 0.5),
+                            0 0 70px rgba(255, 215, 0, 0.3);
+            }
+            100% { 
+                transform: translate(50%, -50%) scale(1.2);
+                box-shadow: 0 0 40px var(--gold-glow),
+                            0 0 60px rgba(255, 215, 0, 0.6),
+                            0 0 80px rgba(255, 215, 0, 0.4);
+            }
+        }
+        
+        @keyframes haloRotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes floatParticle {
+            0% {
+                transform: translateY(0) translateX(0);
+                opacity: 0;
+            }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% {
+                transform: translateY(-100px) translateX(50px);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes statusPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        @keyframes waveExpand {
+            0% { transform: translate(50%, -50%) scale(0); opacity: 1; }
+            100% { transform: translate(50%, -50%) scale(1); opacity: 0; }
+        }
+
+    </style>
+    <!-- في قسم <head> -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+(function () {
+
+  const DESIGN_WIDTH = 950;
+
+  function applyDesktopScale() {
+    const screenWidth = window.innerWidth;
+    if (!screenWidth || screenWidth < 300) return;
+
+    const scale = screenWidth / DESIGN_WIDTH;
+
+    const offsetX = (screenWidth - DESIGN_WIDTH * scale) / 2;
+
+    const html = document.documentElement;
+
+    html.style.width = DESIGN_WIDTH + 'px';
+    html.style.transform =
+      `translateX(${offsetX}px) scale(${scale})`;
+    html.style.transformOrigin = 'top right';
+
+    document.body.style.width = DESIGN_WIDTH + 'px';
+    document.body.style.overflowX = 'hidden';
+  }
+
+  window.addEventListener('load', applyDesktopScale);
+  window.addEventListener('resize', applyDesktopScale);
+
+})();
+</script>
+
+</head>
+<body>
+    <div id="startup-screen">
+        <div id="logo-intro" style="font-size: 1.5em; font-weight: bold; margin-bottom: 10px;">Elite Spark</div>
+        <div id="loading">Initializing system...</div>
+    </div>
+
+    <!-- زر فتح القائمة الجانبية -->
+    <div class="sidebar-toggle" onclick="toggleSidebar()">☰</div>
+
+    <!-- القائمة الجانبية الفخمة -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h3>⚡ Elite Spark Control</h3>
+            <button class="sidebar-close" onclick="toggleSidebar()">×</button>
+        </div>
+        
+        <div class="sidebar-menu">
+            <!-- خيار السمات -->
+            <div class="menu-item active" onclick="toggleSubmenu('themes')">
+                <div class="menu-icon">🎨</div>
+                <div class="menu-text">Themes</div>
+                <div class="menu-badge">10</div>
+            </div>
+            
+            <div class="submenu" id="themes-submenu">
+                <div class="theme-colors">
+                  <!-- السمات الأساسية -->
+                  <div class="theme-color active" style="background: linear-gradient(135deg, #FFD700, #8B7500);" onclick="changeTheme('gold')" title="ذهبي"></div>
+                  <div class="theme-color" style="background: linear-gradient(135deg, #00BFFF, #0066CC);" onclick="changeTheme('blue')" title="أزرق"></div>
+                  <div class="theme-color" style="background: linear-gradient(135deg, #FF69B4, #8B008B);" onclick="changeTheme('pink')" title="وردي"></div>
+                  <div class="theme-color" style="background: linear-gradient(135deg, #00FF7F, #008B45);" onclick="changeTheme('green')" title="أخضر"></div>
+        
+                  <!-- السمات الجديدة -->
+                  <div class="theme-color" style="background: linear-gradient(135deg, #9B59B6, #8E44AD);" onclick="changeTheme('purple')" title="أرجواني"></div>
+                  <div class="theme-color" style="background: linear-gradient(135deg, #FF8C00, #FF4500);" onclick="changeTheme('orange')" title="برتقالي"></div>
+                  <div class="theme-color" style="background: linear-gradient(135deg, #C0C0C0, #A9A9A9);" onclick="changeTheme('silver')" title="فضي"></div>
+                  <div class="theme-color" style="background: linear-gradient(135deg, #40E0D0, #20B2AA);" onclick="changeTheme('turquoise')" title="تركوازي"></div>
+                  <div class="theme-color" style="background: linear-gradient(135deg, #DC143C, #B22222);" onclick="changeTheme('crimson')" title="قرمزي"></div>
+                  <div class="theme-color" style="background: linear-gradient(135deg, #9400D3, #4B0082);" onclick="changeTheme('violet')" title="بنفسجي"></div>
+                </div>
+            </div>
+            
+            <!-- خيار Elite Smart -->
+            <div class="menu-item" onclick="openGoogleHomeDevices()">
+                <div class="menu-icon">✨</div>
+                <div class="menu-text">Elite Smart Home</div>
+                <div class="menu-badge">NEW</div>
+            </div>
+
+            <!-- خيار تحديث الطقس - بأيقونة مختلفة -->
+            <div class="menu-item weather-refresh-btn" onclick="refreshWeather()" id="weather-refresh-btn">
+                <div class="menu-icon2">
+                  <i class="fas fa-sync-alt"></i>
+                </div>
+                <div class="menu-text">Refresh Weather</div>
+                <div class="menu-badge">REF</div>
+                <div class="refresh-spinner" id="weather-spinner">
+                    <i class="fas fa-spinner"></i>
+                </div>
+            </div>
+
+
+            <div class="menu-item" id="micToggle">
+                <div class="menu-icon">🎤</div>
+                <div class="menu-text" id="micStatusText">Turn Mic</div>
+                <div class="menu-badge">MIC</div>
+            </div>
+
+            <!-- زر إعادة تعيين في القائمة الجانبية -->
+            <div class="menu-item" id="resetViz">
+              <div class="menu-icon">🔄</div>
+                <div class="menu-text">Reset</div>
+                <div class="menu-badge">AVA</div>
+            </div>
+
+            <!-- خيارات إضافية -->
+            <div class="menu-item" onclick="toggleSubmenu('more')">
+                <div class="menu-icon">⚡</div>
+                <div class="menu-text">More Options</div>
+            </div>
+            
+            <div class="submenu" id="more-submenu">
+                <div class="submenu-item" onclick="openNotificationsPage()">🔔 Notifications</div>
+                <div class="submenu-item" onclick="showSystemInfo()">💻 System Info</div>
+                <div class="submenu-item" onclick="showHelp()">❓ Help & Support</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة منبثقة لأجهزة Google Home -->
+    <div class="modal-overlay" id="google-home-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🏠 Elite Smart Control</h3>
+                <button class="modal-close" onclick="closeGoogleHomeDevices()">×</button>
+            </div>
+                                
+              <div class="inner-wide-card">
+                <iframe src="https://control.shelly.cloud/#/home/room/1/devices"></iframe>
+              </div>    
+            
+        </div>
+    </div>
+
+    <header class="page-header">
+        <h1>✨Elite Spark Home Control✨</h1>
+    </header>
+
+    <div class="main-container" id="main-container">
+      <div class="header1">
+        <div class="card1">
+            <div class="infinity-avatar-container">
+                <!-- موجات طاقة -->
+                <div class="energy-waves">
+                    <div class="wave" style="animation-delay: 0s"></div>
+                    <div class="wave" style="animation-delay: 1s"></div>
+                    <div class="wave" style="animation-delay: 2s"></div>
+                </div>
+                
+                <!-- جسيمات طافية -->
+                <div class="floating-particles">
+                    <div class="particle" style="top:20%; right:30%; animation-delay:0s"></div>
+                    <div class="particle" style="top:60%; right:70%; animation-delay:2s"></div>
+                    <div class="particle" style="top:40%; right:50%; animation-delay:4s"></div>
+                    <div class="particle" style="top:80%; right:20%; animation-delay:6s"></div>
+                </div>
+                
+                <!-- الجانب الأيسر: النصوص -->
+                <div class="avatar-left-side">
+                    <div class="avatar-subtitle">Elite Spark Infinity</div>
+                    <div class="avatar-status">
+                        <div class="status-indicator"></div>
+                        <div class="status-text" id="avatar-status-text">نظام نشط</div>
+                    </div>
+                </div>
+                
+                <!-- الجانب الأوسط: الدائرة والجسيمات -->
+                <div class="avatar-center">
+                    <div class="avatar-halo">
+                        <div class="halo-particle"></div>
+                        <div class="halo-particle"></div>
+                        <div class="halo-particle"></div>
+                        <div class="halo-particle"></div>
+                    </div>
+                </div>
+                
+                <!-- الجانب الأيمن: رمز Infinity -->
+                <div class="avatar-right-side">
+                    <div class="infinity-symbol">
+                        <div class="infinity-loop loop-1"></div>
+                        <div class="infinity-loop loop-2"></div>
+                        <div class="avatar-core"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        
+
+            <div class="header">
+              <div class="carde">
+              <div class="cards">
+                    
+
+        
+        <!-- مساحة ثلاثية الأبعاد -->
+        <canvas id="infinityCanvas"></canvas>
+        
+        <!-- مؤشر الصوت -->
+        <div class="audio-indicator">
+            <div class="audio-bar" id="audioBar"></div>
+            <span class="audio-text" id="audioLevel">0%</span>
+        
+    </div>
+              </div>
+              <div class="logo">⚡💫  Elite Smart Control by Elite Spark ✨</div>
+              </div>
+              <div class="spacer2"></div>
+              <div class="cardt">
+                <div class="elite-time-container">
+                    <div class="time-indicators">
+                        <div class="indicator-dot"></div>
+                        <div class="indicator-dot"></div>
+                        <div class="indicator-dot"></div>
+                    </div> 
+    
+                    <div class="time-display">
+                        <div class="time-segment" id="elite-time">12</div>
+                        <div class="time-separator">:</div>
+                        <div class="time-segment" id="elite2-time">59</div>
+                        <div class="ampm-indicator" id="elite3-time">PM</div>
+                    </div>
+    
+                    <div class="date-display">
+                        <div class="date-item">
+                            <span id="elite1-time">الجمعة — 15 مارس</span>
+                        </div>
+                        <div class="date-item">
+                            <span class="date-icon">⚡</span>
+                            <span>Elite Time</span>
+                        </div>
+                    </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+            <div class="spacer"></div>
+
+            <div class="card weather-card">
+            <div id="weather-widget-placeholder">
+                <a class="weatherwidget-io" href="https://forecast7.com/en/36d2144d01/erbil/" data-label_1="ERBIL" data-label_2="WEATHER" data-font="Trebuchet MS" data-icons="Climacons Animated" data-days="3" data-theme="weather_one" >ERBIL WEATHER</a>
+                <script>
+                  !function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src='https://weatherwidget.io/js/widget.min.js';fjs.parentNode.insertBefore(js,fjs);}}(document,'script','weatherwidget-io-js');
+                </script>
+            </div>
+            </div>
+        
+    </div>
+
+    <script>
+      
+        // سكربت تحديث الوقت
+        function updateTime() {
+            const now = new Date();
+            const optionsDay = { weekday: 'long' };
+            const optionsDate = { day: 'numeric', month: 'short' };
+    
+            let hours = now.getHours();
+            let minutes = now.getMinutes();
+            let seconds = now.getSeconds();
+    
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12;
+            minutes = minutes < 10 ? '0' + minutes : minutes;
+            seconds = seconds < 10 ? '0' + seconds : seconds;
+    
+            const day = now.toLocaleDateString('AR', optionsDay);
+            const date = now.toLocaleDateString('AR', optionsDate);
+    
+            // لكل عنصر
+            const timeElements = {
+                "elite-time": hours,
+                "elite2-time": minutes,
+                "elite3-time": ampm,
+                "elite1-time": `${day} — ${date}`,
+                "elite-seconds": seconds,
+                "elite-day": day,
+                "elite-date": date,
+                "elite-full-date": now.toLocaleDateString('AR', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                })
+            };
+    
+            // تحديث جميع العناصر
+            for (const [id, value] of Object.entries(timeElements)) {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.innerText = value;
+            
+                    // إضافة تأثير عند تغيير الدقائق
+                    if (id === "elite2-time" && now.getSeconds() === 0) {
+                        element.style.transform = "scale(1.1)";
+                        setTimeout(() => {
+                            element.style.transform = "scale(1)";
+                        }, 300);
+                    }
+                }
+            }
+    
+            // تأثيرات إضافية كل 10 ثواني
+            if (now.getSeconds() % 10 === 0) {
+                document.querySelectorAll('.time-segment, .digit, .neu-hour, .neu-minute').forEach(el => {
+                    el.style.filter = "brightness(1.2)";
+                    setTimeout(() => {
+                        el.style.filter = "brightness(1)";
+                    }, 500);
+                });
+            }
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
+     
+        // سكربت شاشة البداية
+        document.addEventListener("DOMContentLoaded", function() {
+          setTimeout(() => {
+            const screen = document.getElementById("startup-screen");
+            if (screen) {
+                screen.style.opacity = "0";
+                setTimeout(() => { screen.remove(); }, 1000);
+            }
+            loadWeatherWidget(); // ✅ تحميل نظام الطقس
+          
+           }, 2000); 
+        });
+
+        // دالة فتح/إغلاق القائمة الجانبية
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const mainContainer = document.getElementById('main-container');
+            sidebar.classList.toggle('active');
+            mainContainer.classList.toggle('sidebar-active');
+        }
+
+        // دالة فتح/إغلاق القوائم الفرعية
+        function toggleSubmenu(menuId) {
+            const submenu = document.getElementById(menuId + '-submenu');
+            const menuItem = event.currentTarget;
+            
+            // إغلاق جميع القوائم الفرعية الأخرى
+            document.querySelectorAll('.submenu').forEach(item => {
+                if (item !== submenu) {
+                    item.classList.remove('active');
+                }
+            });
+            
+            // إزالة النشاط من جميع عناصر القائمة
+            document.querySelectorAll('.menu-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // تفعيل العنصر الحالي
+            menuItem.classList.add('active');
+            
+            // فتح/إغلاق القائمة الفرعية المحددة
+            if (submenu) {
+                submenu.classList.toggle('active');
+            }
+        }
+
+        // دالة تغيير السمات
+        function changeTheme(theme) {
+            // إزالة النشاط من جميع الأزرار
+            document.querySelectorAll('.theme-color').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // تفعيل الزر المحدد
+            event.currentTarget.classList.add('active');
+            
+            // تغيير الألوان حسب السمة المحددة
+            const root = document.documentElement;
+            // حفظ جميع الألوان في كائن
+            const themes = {
+                'gold': { glow: '#FFD700', accent: '#8B7500' },
+                'blue': { glow: '#00BFFF', accent: '#0066CC' },
+                'pink': { glow: '#FF69B4', accent: '#8B008B' },
+                'green': { glow: '#00FF7F', accent: '#008B45' },
+                'purple': { glow: '#9B59B6', accent: '#8E44AD' },
+                'orange': { glow: '#FF8C00', accent: '#FF4500' },
+                'silver': { glow: '#C0C0C0', accent: '#A9A9A9' },
+                'turquoise': { glow: '#40E0D0', accent: '#20B2AA' },
+                'crimson': { glow: '#DC143C', accent: '#B22222' },
+                'violet': { glow: '#9400D3', accent: '#4B0082' }
+            };
+            
+            if (themes[theme]) {
+                root.style.setProperty('--gold-glow', themes[theme].glow);
+                root.style.setProperty('--accent-color', themes[theme].accent);
+            }
+            // حفظ السمة في localStorage
+            localStorage.setItem('elite-spark-theme', theme);
+            
+            // عرض رسالة تأكيد
+            showNotification(`تم تغيير السمة إلى ${getThemeName(theme)}`);
+        }
+        
+        // دالة للحصول على اسم السمة بالعربية
+        function getThemeName(theme) {
+            const names = {
+                'gold': 'ذهبي',
+                'blue': 'أزرق',
+                'pink': 'وردي',
+                'green': 'أخضر',
+                'purple': 'أرجواني',
+                'orange': 'برتقالي',
+                'silver': 'فضي',
+                'turquoise': 'تركوازي',
+                'crimson': 'قرمزي',
+                'violet': 'بنفسجي'
+            };
+            return names[theme] || theme;
+        }
+
+        function openGoogleHomeDevices() {
+            const modal = document.getElementById('google-home-modal');
+            modal.classList.add('active');
+            toggleSidebar(); // إغلاق القائمة الجانبية
+        }
+
+        function closeGoogleHomeDevices() {
+            const modal = document.getElementById('google-home-modal');
+            modal.classList.remove('active');
+        }
+        
+        function showSystemInfo() {
+            const info = `اسم النظام: Elite Spark Home Control
+الإصدار: 2.1.0
+حالة الخدمة: 🟢 نشط
+آخر تحديث: ${new Date().toLocaleDateString('ar-AR')}
+عدد الأجهزة المتصلة: 3
+استخدام الذاكرة: 42%
+آخر تحديث طقس: ${new Date().toLocaleTimeString('ar-AR')}
+الوقت الحالي: ${new Date().toLocaleTimeString('ar-AR')}`;
+            
+            showCustomAlert('System Info ℹ️', info, 'info');
+        }
+
+        // نافذة المساعدة الحقيقية
+        function showHelp() {
+            const helpContent = `
+          1-  نظام الطقس   
+            • تحديث الطقس التلقائي كل 30 دقيقة
+            • تحديث يدوي من القائمة الجانبية
+            • عرض 3 أيام قادمة
+
+        
+          2-  التحكم الذكي
+            • إدارة أجهزة Shelly Cloud
+            • عرض حالة الأجهزة في الوقت الحقيقي
+            • تحكم كامل من واجهة واحدة
+        
+        
+          3-  السمات والألوان
+            • 10 سمات مختلفة
+            • تغيير فوري
+            • حفظ التفضيلات
+       
+        
+          *   الدعم الفني
+            📧 elite.spark.ai@gmail.com
+            📞 07506039457
+            🕐 24/7 دعم فني
+        
+    `;
+            
+            showCustomAlert('Help & Support 🆘', helpContent, 'help');
+        }
+
+        function toggleNotificationPanel() {
+            openNotificationsPage(); // الآن تفتح صفحة كاملة
+        }
+
+        // =========================================
+        // نظام تحديث الطقس المصحح
+        // =========================================
+        let weatherRefreshInterval;
+
+        function loadWeatherWidget() {
+            console.log('جاري تحميل ويدجيت الطقس...');
+            
+            // إلغاء أي تحديث تلقائي سابق
+            if (weatherRefreshInterval) {
+                clearInterval(weatherRefreshInterval);
+            }
+            
+            // تحديث تلقائي كل 30 دقيقة
+            weatherRefreshInterval = setInterval(refreshWeatherWidget, 30 * 60 * 1000);
+        }
+
+        function refreshWeatherWidget() {
+            const placeholder = document.getElementById('weather-widget-placeholder');
+            
+            // تأثيرات بصرية
+            placeholder.style.opacity = '0.7';
+            placeholder.style.transform = 'scale(0.95)';
+            
+            // مسح المحتوى الحالي
+            placeholder.innerHTML = '';
+            
+            // إعادة إدراج كود الويدجيت
+            const widgetHTML = `
+                <a class="weatherwidget-io" 
+                   href="https://forecast7.com/en/36d2144d01/erbil/" 
+                   data-label_1="ERBIL" 
+                   data-label_2="Elite Spark" 
+                   data-icons="Climacons Animated" 
+                   data-days="3" 
+                   data-theme="original" 
+                   data-basecolor="rgba(0, 0, 0, 0.07)" 
+                   data-textcolor="#ffd700">
+                   ERBIL Elite Spark
+                </a>
+            `;
+            
+            placeholder.innerHTML = widgetHTML;
+            
+            // إعادة تحميل السكربت
+            const scriptUrl = 'https://weatherwidget.io/js/widget.min.js';
+            
+            // إزالة السكربت القديم إذا كان موجوداً
+            const oldScript = document.getElementById('weatherwidget-io-js');
+            if (oldScript) {
+                oldScript.remove();
+            }
+            
+            // إضافة السكربت الجديد
+            const newScript = document.createElement('script');
+            newScript.id = 'weatherwidget-io-js';
+            newScript.src = scriptUrl + '?v=' + Date.now();
+            document.body.appendChild(newScript);
+            
+            // استعادة التأثيرات البصرية
+            setTimeout(() => {
+                placeholder.style.opacity = '1';
+                placeholder.style.transform = 'scale(1)';
+            }, 500);
+            
+            console.log('تم تحديث ويدجيت الطقس');
+        }
+
+        // دالة تحديث الطقس المصححة
+        function refreshWeather() {
+            const btn = document.getElementById('weather-refresh-btn');
+            const menuIcon = btn.querySelector('.menu-icon2 i');
+            
+            // حفظ الأيقونة الأصلية
+            const originalIcon = menuIcon.className;
+            
+            // عرض دوران التحميل
+            menuIcon.className = 'fas fa-spinner fa-spin';
+            btn.style.opacity = '0.7';
+            btn.style.cursor = 'not-allowed';
+            
+            // تأثير بصرية للويدجيت
+            const placeholder = document.getElementById('weather-widget-placeholder');
+            placeholder.style.transition = 'all 0.3s ease';
+            placeholder.style.opacity = '0.7';
+            placeholder.style.transform = 'scale(0.95)';
+            
+            // إعادة تحميل ويدجيت الطقس
+            refreshWeatherWidget();
+            
+            // إغلاق القائمة الجانبية
+            toggleSidebar();
+            
+            // استعادة الزر بعد 2 ثانية
+            setTimeout(() => {
+                menuIcon.className = originalIcon;
+                btn.style.opacity = '1';
+                btn.style.cursor = 'pointer';
+                placeholder.style.opacity = '1';
+                placeholder.style.transform = 'scale(1)';
+                showNotification('تم تحديث بيانات الطقس بنجاح');
+            }, 2000);
+        }
+        
+        // دالة فتح صفحة الإشعارات الكاملة
+        function openNotificationsPage() {
+            toggleSidebar();
+            
+            const notificationsPage = document.createElement('div');
+            notificationsPage.className = 'notifications-page';
+            notificationsPage.style.cssText = `
+                position: fixed;
+                top: 0;
+                right: 0;
+                width: 100%;
+                height: 100%;
+                background: #000;
+                z-index: 9998;
+                animation: slideInRight 0.4s ease;
+                overflow-y: auto;
+            `;
+            
+            notificationsPage.innerHTML = `
+                <!-- الهيدر -->
+                <div class="notifications-header" style="
+                    background: linear-gradient(135deg, #1a1a1a 0%, #000 100%);
+                    padding: 20px;
+                    border-bottom: 2px solid var(--gold-glow);
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    position: sticky;
+                    top: 0;
+                    z-index: 10;
+                ">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <button onclick="closeNotificationsPage()" style="
+                            background: none;
+                            border: none;
+                            color: var(--gold-glow);
+                            font-size: 24px;
+                            cursor: pointer;
+                            padding: 5px;
+                        ">←</button>
+                        <h2 style="margin: 0; color: var(--gold-glow); display: flex; align-items: center; gap: 10px;">
+                            <i class="fas fa-bell"></i> الإشعارات
+                            <span class="notification-count-badge" style="
+                                background: var(--gold-glow);
+                                color: #000;
+                                padding: 2px 10px;
+                                border-radius: 12px;
+                                font-size: 0.8em;
+                                font-weight: bold;
+                            ">4</span>
+                        </h2>
+                    </div>
+                    
+                    <div class="notification-actions" style="display: flex; gap: 10px;">
+                        <button class="notification-action-btn" onclick="notificationFunctions.markAllAsRead()" style="
+                            background: rgba(255, 215, 0, 0.1);
+                            border: 1px solid var(--gold-glow);
+                            color: var(--gold-glow);
+                            padding: 8px 15px;
+                            border-radius: 20px;
+                            cursor: pointer;
+                            font-size: 0.9em;
+                            display: flex;
+                            align-items: center;
+                            gap: 8px;
+                        ">
+                            <i class="fas fa-check-double"></i> تعيين الكل كمقروء
+                        </button>
+                        <button class="notification-action-btn" onclick="notificationFunctions.clearAllNotifications()" style="
+                            background: rgba(255, 215, 0, 0.1);
+                            border: 1px solid var(--gold-glow);
+                            color: var(--gold-glow);
+                            padding: 8px 15px;
+                            border-radius: 20px;
+                            cursor: pointer;
+                            font-size: 0.9em;
+                            display: flex;
+                            align-items: center;
+                            gap: 8px;
+                        ">
+                            <i class="fas fa-trash"></i> مسح الكل
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- محتوى الإشعارات -->
+                <div class="notifications-container" style="
+                    padding: 20px;
+                    max-width: 800px;
+                    margin: 0 auto;
+                ">
+                    <!-- قسم الإشعارات غير المقروءة -->
+                    <div class="notifications-section" style="margin-bottom: 30px;">
+                        <h3 style="color: var(--gold-glow); margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                            <i class="fas fa-circle" style="color: #FF4444; font-size: 0.7em;"></i> غير مقروء (2)
+                        </h3>
+                        
+                        <div class="notifications-list">
+                            <!-- إشعار 1 -->
+                            <div class="notification-card unread" onclick="notificationFunctions.markAsRead(1)" style="
+                                background: rgba(255, 215, 0, 0.05);
+                                border: 1px solid var(--gold-glow);
+                                border-left: 4px solid var(--gold-glow);
+                                border-radius: 15px;
+                                padding: 20px;
+                                margin-bottom: 15px;
+                                cursor: pointer;
+                                transition: all 0.3s ease;
+                                display: flex;
+                                align-items: flex-start;
+                                gap: 15px;
+                            ">
+                                <div class="notification-icon" style="
+                                    background: rgba(255, 215, 0, 0.1);
+                                    width: 50px;
+                                    height: 50px;
+                                    border-radius: 50%;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    font-size: 24px;
+                                ">🌤️</div>
+                                
+                                <div style="flex: 1;">
+                                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                        <div>
+                                            <h4 style="margin: 0 0 5px 0; color: var(--gold-glow);">تحديث الطقس</h4>
+                                            <p style="margin: 0; color: rgba(255, 215, 0, 0.8); font-size: 0.95em;">
+                                                تم تحديث بيانات الطقس بنجاح
+                                            </p>
+                                        </div>
+                                        <div class="notification-dot" style="
+                                            width: 12px;
+                                            height: 12px;
+                                            background: var(--gold-glow);
+                                            border-radius: 50%;
+                                            animation: pulse 1.5s infinite;
+                                        "></div>
+                                    </div>
+                                    <div style="
+                                        display: flex;
+                                        justify-content: space-between;
+                                        align-items: center;
+                                        margin-top: 10px;
+                                    ">
+                                        <span style="color: rgba(255, 215, 0, 0.6); font-size: 0.85em;">
+                                            <i class="far fa-clock"></i> منذ 5 دقائق
+                                        </span>
+                                        <button onclick="notificationFunctions.removeNotification(1, event)" style="
+                                            background: none;
+                                            border: none;
+                                            color: rgba(255, 215, 0, 0.6);
+                                            cursor: pointer;
+                                            padding: 5px;
+                                            font-size: 0.9em;
+                                        ">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- إشعار 3 -->
+                            <div class="notification-card unread" onclick="notificationFunctions.markAsRead(3)" style="
+                                background: rgba(255, 215, 0, 0.05);
+                                border: 1px solid var(--gold-glow);
+                                border-left: 4px solid var(--gold-glow);
+                                border-radius: 15px;
+                                padding: 20px;
+                                margin-bottom: 15px;
+                                cursor: pointer;
+                                transition: all 0.3s ease;
+                                display: flex;
+                                align-items: flex-start;
+                                gap: 15px;
+                            ">
+                                <div class="notification-icon" style="
+                                    background: rgba(255, 215, 0, 0.1);
+                                    width: 50px;
+                                    height: 50px;
+                                    border-radius: 50%;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    font-size: 24px;
+                                ">🔄</div>
+                                
+                                <div style="flex: 1;">
+                                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                        <div>
+                                            <h4 style="margin: 0 0 5px 0; color: var(--gold-glow);">تحديث جديد</h4>
+                                            <p style="margin: 0; color: rgba(255, 215, 0, 0.8); font-size: 0.95em;">
+                                                الإصدار 2.1 متاح الآن
+                                            </p>
+                                        </div>
+                                        <div class="notification-dot" style="
+                                            width: 12px;
+                                            height: 12px;
+                                            background: var(--gold-glow);
+                                            border-radius: 50%;
+                                            animation: pulse 1.5s infinite;
+                                        "></div>
+                                    </div>
+                                    <div style="
+                                        display: flex;
+                                        justify-content: space-between;
+                                        align-items: center;
+                                        margin-top: 10px;
+                                    ">
+                                        <span style="color: rgba(255, 215, 0, 0.6); font-size: 0.85em;">
+                                            <i class="far fa-clock"></i> منذ ساعة
+                                        </span>
+                                        <button onclick="notificationFunctions.removeNotification(3, event)" style="
+                                            background: none;
+                                            border: none;
+                                            color: rgba(255, 215, 0, 0.6);
+                                            cursor: pointer;
+                                            padding: 5px;
+                                            font-size: 0.9em;
+                                        ">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- قسم الإشعارات المقروءة -->
+                    <div class="notifications-section">
+                        <div class="notifications-list">
+                            <!-- إشعار 2 -->
+                            <div class="notification-card read" onclick="notificationFunctions.markAsUnread(2)" style="
+                                background: rgba(255, 215, 0, 0.02);
+                                border: 1px solid rgba(255, 215, 0, 0.2);
+                                border-radius: 15px;
+                                padding: 20px;
+                                margin-bottom: 15px;
+                                cursor: pointer;
+                                transition: all 0.3s ease;
+                                display: flex;
+                                align-items: flex-start;
+                                gap: 15px;
+                                opacity: 0.8;
+                            ">
+                                <div class="notification-icon" style="
+                                    background: rgba(255, 215, 0, 0.05);
+                                    width: 50px;
+                                    height: 50px;
+                                    border-radius: 50%;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    font-size: 24px;
+                                ">⚡</div>
+                                
+                                <div style="flex: 1;">
+                                    <div>
+                                        <h4 style="margin: 0 0 5px 0; color: var(--gold-glow);">النظام نشط</h4>
+                                        <p style="margin: 0; color: rgba(255, 215, 0, 0.6); font-size: 0.95em;">
+                                            Elite Spark يعمل بمثالية
+                                        </p>
+                                    </div>
+                                    <div style="
+                                        display: flex;
+                                        justify-content: space-between;
+                                        align-items: center;
+                                        margin-top: 10px;
+                                    ">
+                                        <span style="color: rgba(255, 215, 0, 0.4); font-size: 0.85em;">
+                                            <i class="far fa-clock"></i> منذ 30 دقيقة
+                                        </span>
+                                        <button onclick="notificationFunctions.removeNotification(2, event)" style="
+                                            background: none;
+                                            border: none;
+                                            color: rgba(255, 215, 0, 0.4);
+                                            cursor: pointer;
+                                            padding: 5px;
+                                            font-size: 0.9em;
+                                        ">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- إشعار 4 -->
+                            <div class="notification-card read" onclick="notificationFunctions.markAsUnread(4)" style="
+                                background: rgba(255, 215, 0, 0.02);
+                                border: 1px solid rgba(255, 215, 0, 0.2);
+                                border-radius: 15px;
+                                padding: 20px;
+                                margin-bottom: 15px;
+                                cursor: pointer;
+                                transition: all 0.3s ease;
+                                display: flex;
+                                align-items: flex-start;
+                                gap: 15px;
+                                opacity: 0.8;
+                            ">
+                                <div class="notification-icon" style="
+                                    background: rgba(255, 215, 0, 0.05);
+                                    width: 50px;
+                                    height: 50px;
+                                    border-radius: 50%;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    font-size: 24px;
+                                ">🛡️</div>
+                                
+                                <div style="flex: 1;">
+                                    <div>
+                                        <h4 style="margin: 0 0 5px 0; color: var(--gold-glow);">أمان النظام</h4>
+                                        <p style="margin: 0; color: rgba(255, 215, 0, 0.6); font-size: 0.95em;">
+                                            جميع الأنظمة تعمل بشكل آمن
+                                        </p>
+                                    </div>
+                                    <div style="
+                                        display: flex;
+                                        justify-content: space-between;
+                                        align-items: center;
+                                        margin-top: 10px;
+                                    ">
+                                        <span style="color: rgba(255, 215, 0, 0.4); font-size: 0.85em;">
+                                            <i class="far fa-clock"></i> منذ 3 ساعات
+                                        </span>
+                                        <button onclick="notificationFunctions.removeNotification(4, event)" style="
+                                            background: none;
+                                            border: none;
+                                            color: rgba(255, 215, 0, 0.4);
+                                            cursor: pointer;
+                                            padding: 5px;
+                                            font-size: 0.9em;
+                                        ">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- حالة عدم وجود إشعارات -->
+                <div id="empty-notifications" style="
+                    display: none;
+                    text-align: center;
+                    padding: 60px 20px;
+                    color: rgba(255, 215, 0, 0.5);
+                ">
+                    <div style="font-size: 60px; margin-bottom: 20px;">🔕</div>
+                    <h3 style="color: rgba(255, 215, 0, 0.7);">لا توجد إشعارات</h3>
+                    <p>سيظهر هنا جميع الإشعارات عند توفرها</p>
+                </div>
+            `;
+            
+            document.body.appendChild(notificationsPage);
+            
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes slideInRight {
+                    from { transform: translateX(100%); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+                
+                @keyframes slideOutRight {
+                    from { transform: translateX(0); opacity: 1; }
+                    to { transform: translateX(100%); opacity: 0; }
+                }
+                
+                @keyframes pulse {
+                    0%, 100% { opacity: 1; }
+                    50% { opacity: 0.5; }
+                }
+
+                @keyframes fadeOut {
+                  from { opacity: 1; transform: translateX(0); }
+                  to { opacity: 0; transform: translateX(100px); }
+                }
+                
+                .notification-card:hover {
+                    transform: translateY(-3px);
+                    box-shadow: 0 5px 20px rgba(255, 215, 0, 0.1);
+                }
+                
+                .notification-card.unread:hover {
+                    background: rgba(255, 215, 0, 0.08);
+                }
+                
+                .notification-card.read:hover {
+                    background: rgba(255, 215, 0, 0.04);
+                    opacity: 1;
+                }
+                
+                .notifications-page::-webkit-scrollbar {
+                    width: 8px;
+                }
+                
+                .notifications-page::-webkit-scrollbar-track {
+                    background: rgba(0, 0, 0, 0.2);
+                }
+                
+                .notifications-page::-webkit-scrollbar-thumb {
+                    background: var(--gold-glow);
+                    border-radius: 10px;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        // دالة إغلاق صفحة الإشعارات
+        function closeNotificationsPage() {
+            const page = document.querySelector('.notifications-page');
+            if (page) {
+                page.style.animation = 'slideOutRight 0.4s ease';
+                setTimeout(() => {
+                    if (page.parentNode) {
+                        page.parentNode.removeChild(page);
+                    }
+                }, 400);
+            }
+        }
+        
+        // =========================================
+        // نظام الإشعارات المصحح (يجب أن تكون في النطاق العام)
+        // =========================================
+
+        // تخزين مراجع للدوال المساعدة للإشعارات
+        window.notificationFunctions = {
+            markAsRead: function(id) {
+                const card = document.querySelector(`.notification-card[onclick*="${id}"]`);
+                if (card) {
+                    card.classList.remove('unread');
+                    card.classList.add('read');
+                    card.style.opacity = '0.8';
+                    card.style.borderLeft = '1px solid rgba(255, 215, 0, 0.2)';
+                    card.style.background = 'rgba(255, 215, 0, 0.02)';
+                    
+                    const onclickAttr = card.getAttribute('onclick');
+                    if (onclickAttr.includes('markAsRead')) {
+                        card.setAttribute('onclick', `notificationFunctions.markAsUnread(${id})`);
+                    }
+                    
+                    const dot = card.querySelector('.notification-dot');
+                    if (dot) dot.remove();
+                    
+                    showNotification(`تم تعيين الإشعار #${id} كمقروء`);
+                    notificationFunctions.updateNotificationCount();
+                }
+            },
+
+            markAsUnread: function(id) {
+                const card = document.querySelector(`.notification-card[onclick*="${id}"]`);
+                if (card) {
+                    card.classList.remove('read');
+                    card.classList.add('unread');
+                    card.style.opacity = '1';
+                    card.style.borderLeft = '4px solid var(--gold-glow)';
+                    card.style.background = 'rgba(255, 215, 0, 0.05)';
+                    
+                    const onclickAttr = card.getAttribute('onclick');
+                    if (onclickAttr.includes('markAsUnread')) {
+                        card.setAttribute('onclick', `notificationFunctions.markAsRead(${id})`);
+                    }
+                    
+                    showNotification(`تم تعيين الإشعار #${id} كغير مقروء`);
+                    notificationFunctions.updateNotificationCount();
+                }
+            },
+
+            removeNotification: function(id, event) {
+                if (event) event.stopPropagation();
+                const card = document.querySelector(`.notification-card[onclick*="${id}"]`);
+                if (card) {
+                    card.style.animation = 'fadeOut 0.3s ease';
+                    card.style.opacity = '0';
+                    
+                    setTimeout(() => {
+                        if (card.parentNode) {
+                            card.parentNode.removeChild(card);
+                            showNotification(`تم حذف الإشعار #${id}`);
+                            notificationFunctions.updateNotificationCount();
+                            notificationFunctions.checkEmptyNotifications();
+                        }
+                    }, 300);
+                }
+            },
+
+            markAllAsRead: function() {
+                const unreadCards = document.querySelectorAll('.notification-card.unread');
+                
+                if (unreadCards.length === 0) {
+                    showNotification('لا توجد إشعارات غير مقروءة');
+                    return;
+                }
+                
+                unreadCards.forEach(card => {
+                    const onclickAttr = card.getAttribute('onclick');
+                    const id = onclickAttr.match(/\d+/)[0];
+                    
+                    card.classList.remove('unread');
+                    card.classList.add('read');
+                    card.style.opacity = '0.8';
+                    card.style.borderLeft = '1px solid rgba(255, 215, 0, 0.2)';
+                    card.style.background = 'rgba(255, 215, 0, 0.02)';
+                    
+                    card.setAttribute('onclick', `notificationFunctions.markAsUnread(${id})`);
+                    
+                    const dot = card.querySelector('.notification-dot');
+                    if (dot) dot.remove();
+                });
+                
+                showNotification(`تم تعيين ${unreadCards.length} إشعارات كمقروءة`);
+                notificationFunctions.updateNotificationCount();
+            },
+
+            clearAllNotifications: function() {
+                const allCards = document.querySelectorAll('.notification-card');
+                if (allCards.length > 0) {
+                    if (confirm('هل أنت متأكد من حذف جميع الإشعارات؟')) {
+                        allCards.forEach(card => {
+                            card.style.animation = 'fadeOut 0.3s ease';
+                            card.style.opacity = '0';
+                            
+                            setTimeout(() => {
+                                if (card.parentNode) {
+                                    card.parentNode.removeChild(card);
+                                }
+                            }, 300);
+                        });
+                        
+                        setTimeout(() => {
+                            showNotification('تم مسح جميع الإشعارات بنجاح');
+                            notificationFunctions.updateNotificationCount();
+                            notificationFunctions.checkEmptyNotifications();
+                        }, 500);
+                    }
+                } else {
+                    showNotification('لا توجد إشعارات لحذفها');
+                }
+            },
+
+            updateNotificationCount: function() {
+                const unreadCount = document.querySelectorAll('.notification-card.unread').length;
+                const badge = document.querySelector('.notification-count-badge');
+                if (badge) {
+                    badge.textContent = unreadCount;
+                    badge.style.display = unreadCount > 0 ? 'inline-block' : 'none';
+                    
+                    const unreadTitle = document.querySelector('.notifications-section h3');
+                    if (unreadTitle) {
+                        unreadTitle.innerHTML = `<i class="fas fa-circle" style="color: #FF4444; font-size: 0.7em;"></i> غير مقروء (${unreadCount})`;
+                    }
+                }
+            },
+
+            checkEmptyNotifications: function() {
+                const allCards = document.querySelectorAll('.notification-card');
+                const emptyDiv = document.getElementById('empty-notifications');
+                const sections = document.querySelectorAll('.notifications-section');
+                
+                if (emptyDiv) {
+                    if (allCards.length === 0) {
+                        emptyDiv.style.display = 'block';
+                        sections.forEach(section => section.style.display = 'none');
+                    } else {
+                        emptyDiv.style.display = 'none';
+                        sections.forEach(section => section.style.display = 'block');
+                    }
+                }
+            }
+        };
+
+        // =======================================
+        // نظام الإشعارات المنبثقة المتوافقة مع التصميم
+        // =========================================
+
+        // دالة إنشاء نافذة منبثقة أنيقة
+        function showCustomAlert(title, message, type = 'info') {
+            // إغلاق القائمة أولاً
+            toggleSidebar();
+            
+            // الانتظار قليلاً
+            setTimeout(() => {
+                // إنشاء عنصر النافذة المنبثقة
+                const modal = document.createElement('div');
+                modal.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 120vh;
+                    
+                    background: rgba(0, 0, 0, 0.85);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 99999;
+                    animation: fadeIn 0.3s ease;
+                `;
+
+                // محتوى النافذة
+                const content = document.createElement('div');
+                content.style.cssText = `
+                    background: linear-gradient(135deg, #1a1a1a 0%, #000 100%);
+                    border: 2px solid var(--gold-glow);
+                    margin-top: 40vh;
+                    border-radius: 20px;
+                    padding: 30px;
+                    max-width: 500px;
+                    width: 90%;
+                    box-shadow: 0 0 40px rgba(255, 215, 0, 0.3);
+                    animation: slideUp 0.4s ease;
+                `;
+                
+                // الرأس مع الأيقونة
+                const icon = type === 'info' ? 'ℹ️' : type === 'help' ? '❓' : '🔔';
+                const header = document.createElement('div');
+                header.style.cssText = `
+                    display: flex;
+                    align-items: center;
+                    gap: 15px;
+                    margin-bottom: 20px;
+                    padding-bottom: 15px;
+                    border-bottom: 1px solid rgba(255, 215, 0, 0.3);
+                `;
+                header.innerHTML = `
+                    <span style="font-size: 28px;">${icon}</span>
+                    <h3 style="margin: 0; color: var(--gold-glow); font-size: 1.3em;">${title}</h3>
+                `;
+                
+                // المحتوى
+                const body = document.createElement('div');
+                body.style.cssText = `
+                    color: #FFD700;
+                    line-height: 1.6;
+                    margin-bottom: 25px;
+                    white-space: pre-line;
+                    max-height: calc(60vh - 80px); /* ارتفاع معقول */
+                    overflow-y: auto; /* قابلية التمرير */
+                `;
+                
+                // إذا كانت الرسالة تحتوي على HTML (لوحة الإشعارات)
+                if (message.includes('notifications-panel') || message.includes('<div')) {
+                    body.innerHTML = message;
+                } else {
+                    body.textContent = message;
+                }
+                
+                // زر الإغلاق
+                const closeBtn = document.createElement('button');
+                closeBtn.style.cssText = `
+                    background: linear-gradient(135deg, #000, #1a1a1a);
+                    color: var(--gold-glow);
+                    border: 1px solid var(--gold-glow);
+                    padding: 10px 30px;
+                    border-radius: 25px;
+                    font-size: 16px;
+                    cursor: pointer;
+                    display: block;
+                    margin: 0 auto;
+                    transition: all 0.3s ease;
+                `;
+                closeBtn.textContent = 'Ok';
+                closeBtn.onclick = () => document.body.removeChild(modal);
+                closeBtn.onmouseover = () => {
+                    closeBtn.style.transform = 'scale(1.05)';
+                    closeBtn.style.boxShadow = '0 0 15px rgba(255, 215, 0, 0.4)';
+                };
+                closeBtn.onmouseout = () => {
+                    closeBtn.style.transform = 'scale(1)';
+                    closeBtn.style.boxShadow = 'none';
+                };
+                
+                // تجميع العناصر
+                content.appendChild(header);
+                content.appendChild(body);
+                content.appendChild(closeBtn);
+                modal.appendChild(content);
+                
+                // إضافة أنماط CSS للحركات
+                const style = document.createElement('style');
+                style.textContent = `
+                    @keyframes fadeIn {
+                        from { opacity: 0; }
+                        to { opacity: 1; }
+                    }
+                    @keyframes slideUp {
+                        from { transform: translateY(30px); opacity: 0; }
+                        to { transform: translateY(0); opacity: 1; }
+                    }
+                `;
+                document.head.appendChild(style);
+                
+                // إضافة النافذة إلى الجسم
+                document.body.appendChild(modal);
+                
+                // إغلاق بالنقر خارج النافذة
+                modal.onclick = (e) => {
+                    if (e.target === modal) {
+                        document.body.removeChild(modal);
+                    }
+                };
+                
+                // إغلاق بالزر Esc
+                const handleEsc = (e) => {
+                    if (e.key === 'Escape') {
+                        document.body.removeChild(modal);
+                        document.removeEventListener('keydown', handleEsc);
+                    }
+                };
+                document.addEventListener('keydown', handleEsc);
+            }, 300);
+        }
+        
+        // دالة عرض الإشعارات البسيطة
+        function showNotification(message) {
+            // إنشاء عنصر الإشعار
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 80px;
+                right: 20px;
+                background: linear-gradient(135deg, #000, #1a1a1a);
+                color: var(--gold-glow);
+                padding: 15px 20px;
+                border-radius: 10px;
+                border: 1px solid var(--gold-glow);
+                box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
+                z-index: 10000;
+                font-family: Arial;
+                max-width: 300px;
+                animation: slideIn 0.5s ease, fadeOut 0.5s ease 2.5s forwards;
+            `;
+            
+            // إضافة CSS للرسوم المتحركة
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes slideIn {
+                    from { transform: translateX(100%); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+                @keyframes fadeOut {
+                    from { opacity: 1; }
+                    to { opacity: 0; }
+                }
+            `;
+            document.head.appendChild(style);
+            
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            // إزالة الإشعار بعد 3 ثوان
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 3000);
+        }
+
+        // ⚡ أكواد تفاعلية للأفاتار - معدلة للتصميم الجديد
+        
+        // تغيير حالة الأفاتار
+        const statusText = document.getElementById('avatar-status-text');
+        const statusIndicator = document.querySelector('.status-indicator');
+        
+        const statusMessages = [
+            { text: 'نظام نشط', color: '#00FF00', emoji: '🟢' },
+            { text: 'جاري المعالجة', color: '#FFFF00', emoji: '🟡' },
+            { text: 'حالة مثالية', color: '#00FF00', emoji: '⚡' },
+            { text: 'جاهز للأوامر', color: '#00FF00', emoji: '✅' }
+        ];
+        
+        // تغيير الحالة كل 8 ثواني
+        let statusIndex = 0;
+        function updateAvatarStatus() {
+            const status = statusMessages[statusIndex];
+            statusText.textContent = status.text;
+            statusIndicator.style.background = status.color;
+            statusIndicator.style.boxShadow = `0 0 10px ${status.color}`;
+            
+            statusIndex = (statusIndex + 1) % statusMessages.length;
+        }
+        
+        setInterval(updateAvatarStatus, 8000);
+        
+        // تأثيرات تفاعلية
+        const avatarContainer = document.querySelector('.infinity-avatar-container');
+        const core = document.querySelector('.avatar-core');
+        const loops = document.querySelectorAll('.infinity-loop');
+        const halo = document.querySelector('.avatar-halo');
+        
+        // عند المرور على الأفاتار
+        avatarContainer.addEventListener('mouseenter', function() {
+            // تسريع الدوران
+            loops.forEach(loop => {
+                loop.style.animationDuration = '2s';
+            });
+            
+            // تسريع دوران الهالة
+            halo.style.animationDuration = '10s';
+            
+            // تكبير النواة
+            core.style.transform = 'translate(50%, -50%) scale(1.5)';
+            
+            
+            // تأثير على النصوص
+            document.querySelector('.avatar-title').style.textShadow = 
+                '0 0 15px rgba(255, 215, 0, 0.9), 0 0 25px rgba(255, 215, 0, 0.5)';
+        });
+        
+        avatarContainer.addEventListener('mouseleave', function() {
+            // استعادة السرعة الطبيعية
+            loops.forEach(loop => {
+                loop.style.animationDuration = '4s';
+            });
+            
+            // استعادة دوران الهالة
+            halo.style.animationDuration = '20s';
+            
+            // استعادة حجم النواة
+            core.style.transform = 'translate(50%, -50%) scale(1)';
+            
+            // استعادة الظل
+            document.querySelector('.card1').style.boxShadow = 
+                '0 0 15px rgba(255, 215, 0, 0.3)';
+            
+            // استعادة النصوص
+            document.querySelector('.avatar-title').style.textShadow = 
+                '0 0 10px rgba(255, 215, 0, 0.7)';
+        });
+        
+        // عند النقر على الأفاتار
+        avatarContainer.addEventListener('click', function() {
+            // تأثير اهتزاز
+            this.style.animation = 'avatarClick 0.5s ease';
+            
+            // موجة طاقة تبدأ من المنتصف
+            const wave = document.createElement('div');
+            wave.className = 'wave';
+            wave.style.animation = 'waveExpand 1s ease-out';
+            document.querySelector('.energy-waves').appendChild(wave);
+            
+            // تأثير على الجسيمات
+            const particles = document.querySelectorAll('.particle');
+            particles.forEach(particle => {
+                particle.style.animationDuration = '2s';
+                setTimeout(() => {
+                    particle.style.animationDuration = '10s';
+                }, 2000);
+            });
+            
+            // إزالة الموجة بعد انتهاء الحركة
+            setTimeout(() => {
+                if (wave.parentNode) {
+                    wave.parentNode.removeChild(wave);
+                }
+            }, 1000);
+            
+            // إظهار رسالة
+            showAvatarMessage();
+        });
+        
+        // رسائل عشوائية عند النقر
+        const avatarMessages = [
+            '⚡ الطاقة في ذروتها!',
+            '✨ النظام يعمل بمثالية',
+            '🎯 جاهز لأي أمر',
+            '🌟 Elite Spark بأفضل حال',
+            '💫 Infinity Core نشط',
+            '🚀 الأداء في القمة',
+            '🌈 النظام مستقر تماماً'
+        ];
+        
+        function showAvatarMessage() {
+            const randomMessage = avatarMessages[Math.floor(Math.random() * avatarMessages.length)];
+            
+            // إنشاء فقاعة رسالة تظهر في المنتصف
+            const messageBubble = document.createElement('div');
+            messageBubble.textContent = randomMessage;
+            messageBubble.style.cssText = `
+                position: absolute;
+                top: 50%;
+                right: 50%;
+                transform: translate(50%, -50%);
+                background: rgba(0, 0, 0, 0.9);
+                color: #FFD700;
+                padding: 10px 20px;
+                border-radius: 25px;
+                border: 2px solid #FFD700;
+                font-size: 1em;
+                white-space: nowrap;
+                z-index: 100;
+                animation: bubblePop 2s ease forwards;
+                box-shadow: 0 5px 20px rgba(255, 215, 0, 0.4);
+            `;
+            
+            avatarContainer.appendChild(messageBubble);
+            
+            // إزالة الفقاعة بعد 2 ثانية
+            setTimeout(() => {
+                if (messageBubble.parentNode) {
+                    messageBubble.parentNode.removeChild(messageBubble);
+                }
+            }, 2000);
+        }
+        
+        // إضافة أنماط الحركة الجديدة
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes avatarClick {
+                0%, 100% { transform: scale(1); }
+                50% { transform: scale(1.02); }
+            }
+            
+            @keyframes bubblePop {
+                0% { 
+                    opacity: 0;
+                    transform: translate(50%, -50%) scale(0.5);
+                }
+                20% { 
+                    opacity: 1;
+                    transform: translate(50%, -50%) scale(1.1);
+                }
+                40% { 
+                    transform: translate(50%, -50%) scale(1);
+                }
+                80% { 
+                    opacity: 1;
+                    transform: translate(50%, -50%) scale(1);
+                }
+                100% { 
+                    opacity: 0;
+                    transform: translate(50%, -50%) scale(0.8);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // بدء التشغيل
+        document.addEventListener('DOMContentLoaded', function() {
+            // تحديث الحالة أول مرة
+            updateAvatarStatus();
+            
+            // تأثير ظهور تدريجي
+            setTimeout(() => {
+                document.querySelector('.card1').style.opacity = '1';
+                document.querySelector('.card1').style.transform = 'translateY(0)';
+                
+                // ظهور تدريجي للعناصر
+                const elements = document.querySelectorAll('.avatar-left-side, .avatar-center, .avatar-right-side');
+                elements.forEach((el, index) => {
+                    setTimeout(() => {
+                        el.style.opacity = '1';
+                        el.style.transform = 'translateX(0)';
+                    }, index * 200);
+                });
+            }, 500);
+            
+            // إعدادات أولية للحركات
+            document.querySelectorAll('.avatar-left-side, .avatar-center, .avatar-right-side').forEach(el => {
+                el.style.opacity = '0';
+                el.style.transform = 'translateX(20px)';
+                el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+            });
+        });
+
+        // إغلاق القائمة الجانبية عند النقر خارجها
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('sidebar');
+            const sidebarToggle = document.querySelector('.sidebar-toggle');
+            const mainContainer = document.getElementById('main-container');
+            
+            if (sidebar.classList.contains('active') && 
+                !sidebar.contains(event.target) && 
+                !sidebarToggle.contains(event.target)) {
+                sidebar.classList.remove('active');
+                mainContainer.classList.remove('sidebar-active');
+            }
+        });
+        // سكربت الإنفينيتي ثلاثي الأبعاد مع الميكروفون
+        document.addEventListener('DOMContentLoaded', function() {
+            // ========== تهيئة المشهد ثلاثي الأبعاد ==========
+            const canvas = document.getElementById('infinityCanvas');
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ 
+                canvas: canvas, 
+                antialias: true, 
+                alpha: true 
+            });
+    
+            renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setClearColor(0x000000, 0);
+    
+            camera.position.z = 8;
+    
+            // ========== متغيرات التحكم ==========
+            let microphoneActive = false;
+            let audioContext = null;
+            let analyser = null;
+            let microphone = null;
+            let audioDataArray = null;
+            let volumeLevel = 0;
+            let currentThemeColor = 0xFFD700;
+    
+           // ========== إنشاء شكل الإنفينيتي ==========
+            const particles = new THREE.Group();
+            scene.add(particles);
+    
+            function createInfinityShape(count = 150) {
+                particles.clear();
+        
+                const geometry = new THREE.SphereGeometry(0.08, 6, 6);
+        
+                for(let i = 0; i < count; i++) {
+                    const t = (i / count) * Math.PI * 2;
+            
+                    // معادلة الإنفينيتي (∞)
+                    const scale = 5;
+                    const x = scale * Math.sin(t);
+                    const y = scale * Math.sin(t) * Math.cos(t);
+                    const z = scale * Math.cos(t);
+            
+                    const material = new THREE.MeshBasicMaterial({
+                        color: currentThemeColor,
+                        transparent: true,
+                        opacity: 0.8
+                    });
+            
+                    const particle = new THREE.Mesh(geometry, material);
+                    particle.position.set(x, y, z);
+            
+                    particle.userData = {
+                        originalX: x,
+                        originalY: y,
+                        originalZ: z,
+                        timeOffset: Math.random() * Math.PI * 2,
+                        speed: 0.5 + Math.random() * 0.5
+                    };
+            
+                    particles.add(particle);
+                }
+            }
+    
+            createInfinityShape();
+                // ========== تحديث الألوان حسب السمة الحالية ==========
+            function updateColors() {
+                // الحصول على اللون الحالي من المتغير CSS
+                const rootStyles = getComputedStyle(document.documentElement);
+                const themeColor = rootStyles.getPropertyValue('--gold-glow').trim();
+        
+                // تحويل اللون من hex إلى THREE.Color
+                let colorHex;
+                if (themeColor.startsWith('#')) {
+                    colorHex = parseInt(themeColor.replace('#', ''), 16);
+                } else if (themeColor.startsWith('rgb')) {
+                    // تحويل rgb إلى hex
+                    const rgb = themeColor.match(/\d+/g);
+                    if (rgb) {
+                        colorHex = (parseInt(rgb[0]) << 16) + (parseInt(rgb[1]) << 8) + parseInt(rgb[2]);
+                    } else {
+                        colorHex = 0xFFD700; // لون افتراضي
+                    }
+                } else {
+                    colorHex = 0xFFD700; // لون افتراضي
+                }
+        
+                currentThemeColor = colorHex;
+        
+                // تحديث ألوان الإنفينيتي
+                particles.children.forEach(child => {
+                    if (child.material) {
+                        child.material.color.setHex(currentThemeColor);
+                    }
+                });
+        
+            }
+    
+            // ========== إضافة الضوء ==========
+            const ambientLight = new THREE.AmbientLight(0xFFD700, 0.3);
+            scene.add(ambientLight);
+    
+            const pointLight = new THREE.PointLight(0xFFD700, 1, 20);
+            pointLight.position.set(5, 5, 5);
+            scene.add(pointLight);
+    
+            // ========== تفعيل الميكروفون ==========
+            async function activateMicrophone() {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ 
+                        audio: {
+                            echoCancellation: false,
+                            noiseSuppression: false,
+                            autoGainControl: false
+                        } 
+                    });
+            
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    analyser = audioContext.createAnalyser();
+            
+                    analyser.fftSize = 256;
+                    analyser.smoothingTimeConstant = 0.8;
+            
+                    const bufferLength = analyser.frequencyBinCount;
+                    audioDataArray = new Uint8Array(bufferLength);
+            
+                    microphone = audioContext.createMediaStreamSource(stream);
+                    microphone.connect(analyser);
+            
+                    microphoneActive = true;
+            
+                    // تحديث واجهة المستخدم
+                    document.getElementById('micStatusText').textContent = 'Close Mic';
+                    document.getElementById('micToggle').style.background = 'rgba(0, 255, 0, 0.2)';
+                    document.getElementById('micToggle').style.borderColor = '#00ff00';
+
+                    toggleSidebar();
+
+                    showNotification(`تم تشغيل المكريفون بنجاح`);
+            
+                    return true;
+            
+                } catch (error) {
+                    console.error('خطأ في الميكروفون:', error);
+                    alert('يرجى السماح بالوصول إلى الميكروفون');
+                    return false;
+                }
+
+            }
+    
+            // ========== إيقاف الميكروفون ==========
+            function deactivateMicrophone() {
+                if (audioContext) {
+                    audioContext.close();
+                    audioContext = null;
+                }
+        
+                microphoneActive = false;
+                volumeLevel = 0;
+        
+                // تحديث واجهة المستخدم
+                document.getElementById('micStatusText').textContent = 'Turn Mic';
+                document.getElementById('micToggle').style.background = 'rgba(255, 215, 0, 0.1)';
+                document.getElementById('micToggle').style.borderColor = 'var(--gold-glow)';
+                updateAudioIndicator(0);
+
+                toggleSidebar();
+
+                showNotification(`تم ايقاف المكريفون بنجاح`);
+            }
+
+    
+            // ========== تحليل الصوت من الميكروفون ==========
+            function analyzeAudio() {
+                if (!microphoneActive || !analyser || !audioDataArray) {
+                    // محاكاة حركة إذا لم يكن الميكروفون مفعلاً
+                    particles.rotation.y += 0.002;
+                    return;
+                }
+        
+                analyser.getByteFrequencyData(audioDataArray);
+        
+                // حساب مستوى الصوت (مضخم للحساسية القوية)
+                let sum = 0;
+                for(let i = 0; i < audioDataArray.length; i++) {
+                    sum += audioDataArray[i];
+                }
+                volumeLevel = (sum / audioDataArray.length) / 256;
+        
+                // تضخيم الإشارة ×3 للحساسية القوية
+                volumeLevel = Math.min(volumeLevel * 3, 1);
+        
+                // تحديث المؤشر البصري
+                updateAudioIndicator(volumeLevel);
+        
+                // تطبيق التأثير على الجسيمات
+                applyAudioEffects(volumeLevel);
+            }
+    
+            // ========== تحديث مؤشر الصوت ==========
+            function updateAudioIndicator(level) {
+                const audioBar = document.getElementById('audioBar');
+                const audioLevel = document.getElementById('audioLevel');
+        
+                const percent = Math.round(level * 100);
+                audioBar.style.setProperty('--width', percent + '%');
+                audioLevel.textContent = percent + '%';
+        
+                // تغيير اللون حسب مستوى الصوت
+                if (percent > 70) {
+                    audioBar.style.background = 'linear-gradient(90deg, #ff0000, #ff5500)';
+                } else if (percent > 40) {
+                    audioBar.style.background = 'linear-gradient(90deg, #ffaa00, #ffff00)';
+                } else {
+                    audioBar.style.background = 'linear-gradient(90deg, var(--gold-glow), #ff9900)';
+                }
+            }
+    
+            // ========== تطبيق تأثيرات الصوت على الجسيمات ==========
+            function applyAudioEffects(volume) {
+                const time = Date.now() * 0.001;
+        
+                particles.children.forEach((particle, i) => {
+                    const data = particle.userData;
+                    const t = (i / particles.children.length) * Math.PI * 2 + time * data.speed;
+                    
+                    // الحركة الأساسية (شكل الإنفينيتي)
+                    let x = data.originalX;
+                    let y = data.originalY;
+                    let z = data.originalZ;
+            
+                    if (volume > 0.1) {
+                        // تأثير الصوت على الحركة
+                        const wave = Math.sin(t + data.timeOffset) * volume * 2;
+                        const wave2 = Math.cos(t * 1.3 + data.timeOffset) * volume * 1.5;
+                
+                        x += wave;
+                        y += wave2;
+                        z += Math.sin(t * 0.7) * volume;
+                
+                        // تغيير الحجم حسب الصوت
+                        const scale = 0.3 + (volume * 0.6);
+                        particle.scale.set(scale, scale, scale);
+                
+                        // تغيير اللون حسب شدة الصوت
+                        if (volume > 0.7) {
+                            particle.material.color.setHex(currentThemeColor); // برتقالي
+                        } else if (volume > 0.4) {
+                            particle.material.color.setHex(currentThemeColor); // أصفر
+                        } else {
+                            particle.material.color.setHex(currentThemeColor); // ذهبي
+                        }
+                
+                        // زيادة الشفافية مع الصوت
+                        particle.material.opacity = 0.6 + (volume * 0.4);
+                    } else {
+                        // حالة هادئة
+                        particle.scale.set(0.08, 0.08, 0.08);
+                        particle.material.color.setHex(currentThemeColor);
+                        particle.material.opacity = 0.6;
+                    }
+            
+                    particle.position.set(x, y, z);
+                });
+        
+                // دوران المجموعة
+                particles.rotation.y += 0.002 + (volume * 0.01);
+                particles.rotation.x += volume * 0.005;
+            }
+    
+            // ========== أحداث التحكم ==========
+            document.getElementById('micToggle').addEventListener('click', async function() {
+                if (!microphoneActive) {
+                    const success = await activateMicrophone();
+                    if (!success) {
+                        deactivateMicrophone();
+                    }
+                } else {
+                    deactivateMicrophone();
+                }
+            });
+    
+            document.getElementById('resetViz').addEventListener('click', function() {
+                if (audioContext) {
+                    audioContext.close();
+                    audioContext = null;
+                }
+        
+                microphoneActive = false;
+                volumeLevel = 0;
+        
+                // تحديث واجهة المستخدم
+                document.getElementById('micStatusText').textContent = 'Turn Mic';
+                document.getElementById('micToggle').style.background = 'rgba(255, 215, 0, 0.1)';
+                document.getElementById('micToggle').style.borderColor = 'var(--gold-glow)';
+                updateAudioIndicator(0);
+
+                toggleSidebar();
+                createInfinityShape();
+                particles.rotation.set(0, 0, 0);
+                showNotification(` تم اعادة تعيين الافاتار وايقاف المكريفون `);
+            });
+    
+            // ========== دورة التصيير ==========
+            function animate() {
+                requestAnimationFrame(animate);
+        
+                analyzeAudio();
+                renderer.render(scene, camera);
+            }
+
+                // ========== مراقبة تغيير السمات ==========
+            function observeThemeChanges() {
+                // مراقبة تغييرات CSS
+                const observer = new MutationObserver(function(mutations) {
+                    mutations.forEach(function(mutation) {
+                        if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                            updateColors();
+                        }
+                    });
+                });
+        
+                observer.observe(document.documentElement, {
+                    attributes: true,
+                    attributeFilter: ['style']
+                });
+        
+                // تحديث الألوان كل 2 ثانية تحسباً للتغييرات
+                setInterval(updateColors, 2000);
+            }
+    
+    
+            // ========== معالجة تغيير الحجم ==========
+            function handleResize() {
+                camera.aspect = canvas.clientWidth / canvas.clientHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+            }
+    
+            window.addEventListener('resize', handleResize);
+    
+            // ========== بدء النظام ==========
+            updateColors(); // تطبيق الألوان الحالية
+            observeThemeChanges(); // مراقبة تغييرات السمات
+            animate();
+    
+            // إضافة خاصية CSS للمؤشر
+            const style = document.createElement('style');
+            style.textContent = `
+                .audio-bar::after {
+                    width: var(--width, 0%);
+                }
+            `;
+            document.head.appendChild(style);
+        });
+
+
+    </script> 
+</body>
+</html>
